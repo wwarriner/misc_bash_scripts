@@ -1,0 +1,41 @@
+#!/bin/bash
+
+# Writes runtimes of the most recent solver run for all MAGMA projects
+# in the user's home directory.
+# Output contains a csv of project name, version (without v), and time (in seconds, probably)
+MYEXECUTABLE="$1"
+
+shift
+MYRESULTS="$@"
+
+STARTDIR=${HOME}/MAGMAprojects
+OUTPUTDIR=${STARTDIR}'/api_code_results'
+mkdir -p ${OUTPUTDIR}
+
+for PROJECTDIR in $( find ${STARTDIR}/* -maxdepth 0 -type d )
+do
+	
+	PROJECTNAME=$( echo ${PROJECTDIR} | sed 's/\/$//;s/.*\///' )
+	if [ ${PROJECTNAME} != "UserDB" ] && [ ${PROJECTNAME} != "workspace" ]
+	then
+	
+		for VERSIONDIR in $( find ${PROJECTDIR}/* -maxdepth 0 -type d | grep -e 'v[0-9]' )
+		do
+			
+			VERSION=$( echo ${VERSIONDIR} | sed 's/\/$//;s/.*\/v//' )
+			
+			for RESULT in ${MYRESULTS}
+			do				
+				
+				OUTPUTFILE=${OUTPUTDIR}'/'${PROJECTNAME}'_v'${VERSION}'_'${RESULT}'.csv'
+				
+				./run_magma_executable ${MYEXECUTABLE} ${VERSIONDIR} ${OUTPUTFILE} ${RESULT}
+				wait
+				
+			done
+			
+		done
+		
+	fi
+	
+done

@@ -1,0 +1,35 @@
+#!/bin/bash
+
+# Writes runtimes of the most recent solver run for all MAGMA projects
+# in the user's home directory.
+# Output contains a csv of project name, version (without v), and time (in seconds, probably)
+STARTDIR=${HOME}/MAGMAprojects
+FILENAME=run.log
+OUTPUTFILE=${STARTDIR}/'project_runtimes.csv'
+rm -f ${OUTPUTFILE}
+
+echo -en 'Project Name,Version,Runtimes (s) (most recent at left)\n' >> ${OUTPUTFILE}
+
+for PROJECTDIR in $( find ${STARTDIR}/* -maxdepth 0 -type d )
+do
+
+	PROJECTNAME=$(echo ${PROJECTDIR} | sed 's/\/$//;s/.*\///')
+	
+	for VERSIONDIR in $( find ${PROJECTDIR}/* -maxdepth 0 -type d | grep 'v[0-9]*$')
+	do
+		
+		VERSION=$(echo ${VERSIONDIR} | sed 's/\/$//;s/.*\/v//')
+		
+		echo -n ${PROJECTNAME}, >> ${OUTPUTFILE}
+		echo -n ${VERSION}, >> ${OUTPUTFILE}
+		
+		grep -E '(elapsed time){1}\s*:\s*[0-9]+(.{1}[0-9]*)?\s*(s)' ${VERSIONDIR}/${FILENAME} |
+			tail | # newest first
+			awk -F ' : ' '{print $2}' | # elapsed time:[spaces][number][space][ms], so get part after :
+			sed 's/^[[:blank:]]*//;s/[[:blank:][:alpha:]]*$//' | # strip whitespace and units
+			tr '\n' ',' | # replace newlines from tail with commas for csv
+			sed 's/,$//' >> ${OUTPUTFILE} # replace last comma with nothing and append
+			echo -en '\n' >> ${OUTPUTFILE} # append final newline
+		
+	done
+done

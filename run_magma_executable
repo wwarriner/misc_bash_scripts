@@ -1,0 +1,5 @@
+#!/bin/bash
+MAGMADIR=/opt/MAGMA5/v5.2.0/LINUX64_25/bin
+MAGMAPROG=ms
+echo $1
+$MAGMADIR/$MAGMAPROG -e "$@"
